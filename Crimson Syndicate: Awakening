@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-title" content="Crimson Notes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Crimson Notes — Viewer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    background: #0d0d0d;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'Courier New', monospace;
+    overflow: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(180,20,20,0.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(180,20,20,0.14) 1px, transparent 1px);
+    background-size: 34px 34px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  #scanline {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(transparent, rgba(204,68,68,0.25), transparent);
+    animation: scan 3s linear infinite;
+    pointer-events: none; z-index: 40;
+  }
+  @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+
+  #titlebar {
+    position: relative; z-index: 5;
+    background: #161616;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  #titlebar .logo { color: #cc4444; font-weight: bold; font-size: 13px; letter-spacing: 1px; }
+  #sync-status { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: 10px; color: #666; }
+  #sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #555; flex-shrink: 0; transition: background 0.3s; }
+  #sync-dot.syncing { background: #e8a838; animation: pulse 1s ease-in-out infinite; }
+  #sync-dot.saved { background: #4ecb82; }
+  #sync-dot.error { background: #ff6b7a; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  #refresh-btn {
+    background: #1e1e1e; border: 1px solid #333; color: #888;
+    width: 30px; height: 30px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  #refresh-btn:active { background: #2a2a2a; transform: scale(0.94); }
+  #refresh-btn.spinning svg { animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #content-wrap {
+    position: relative; z-index: 1;
+    flex: 1; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #content {
+    padding: 16px 18px 60px;
+    font-size: 14.5px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  #content:empty::before {
+    content: 'No notes loaded yet.';
+    color: #444;
+  }
+
+  #app { height: 100%; display: flex; flex-direction: column; }
+
+  #empty-state, #setup-screen {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px; padding: 30px; text-align: center;
+    position: relative; z-index: 1;
+  }
+  #empty-state .icon, #setup-screen .icon { font-size: 34px; opacity: 0.5; }
+  #empty-state p, #setup-screen p { color: #666; font-size: 13px; max-width: 280px; line-height: 1.6; }
+
+  .modal-input {
+    background: #1a1a1a; color: #d4d4d4; border: 1px solid #3a3a3a;
+    border-radius: 6px; padding: 10px 12px; font-family: monospace;
+    font-size: 13px; width: 100%; max-width: 320px; outline: none;
+  }
+  .modal-input:focus { border-color: #cc4444; }
+  .setup-label { font-size: 11px; color: #777; align-self: flex-start; max-width: 320px; width: 100%; margin-top: 6px; }
+  .setup-btn {
+    margin-top: 10px; padding: 10px 22px; background: #2a1010;
+    border: 1px solid #cc444455; color: #ff6b7a; border-radius: 6px;
+    font-size: 13px; font-family: inherit; width: 100%; max-width: 320px;
+  }
+  .setup-btn:active { background: #351414; }
+  .setup-link { color: #5bc4f5; font-size: 11px; }
+
+  #footer-bar {
+    position: relative; z-index: 5;
+    background: #161616; border-top: 1px solid #2a2a2a;
+    padding: 8px 14px; font-size: 10px; color: #555;
+    display: flex; justify-content: space-between; flex-shrink: 0;
+  }
+  #footer-bar span#settings-link { color: #5bc4f5; }
+
+  .flash { animation: flashbg 0.6s ease; }
+  @keyframes flashbg { 0% { background: rgba(204,68,68,0.15); } 100% { background: transparent; } }
+</style>
+</head>
+<body>
+
+<div id="scanline"></div>
+
+<div id="app">
+  <div id="titlebar">
+    <span class="logo">⬡ CRIMSON NOTES</span>
+    <span style="color:#555;font-size:11px">viewer</span>
+    <div id="sync-status">
+      <div id="sync-dot"></div>
+      <span id="sync-label">idle</span>
+    </div>
+    <button id="refresh-btn" onclick="manualRefresh()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.4">
+        <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="setup-screen" style="display:none">
+    <div class="icon">☁</div>
+    <div style="font-size:13px;color:#ccc;font-weight:bold">Connect to Crimson Notes</div>
+    <p>Enter the same JSONBin API Key + Bin ID used in your PC editor. This device only ever reads — it can't push changes.</p>
+    <label class="setup-label">API Key</label>
+    <input id="input-apikey" class="modal-input" type="password" placeholder="$2a$10$...">
+    <label class="setup-label">Bin ID</label>
+    <input id="input-binid" class="modal-input" type="text" placeholder="64f3a8b2e4b0d9e1f2a3b4c5">
+    <button class="setup-btn" onclick="saveSetup()">✔ Connect</button>
+    <p class="setup-link" onclick="location.reload()" style="margin-top:8px;cursor:pointer">Cancel</p>
+  </div>
+
+  <div id="empty-state" style="display:none">
+    <div class="icon">📄</div>
+    <div style="font-size:13px;color:#ccc;font-weight:bold">Nothing here yet</div>
+    <p>No notes have been pushed to the cloud bin yet. Push from your PC editor, then pull-to-refresh here.</p>
+  </div>
+
+  <div id="content-wrap" style="display:none">
+    <div id="content" contenteditable="false"></div>
+  </div>
+
+  <div id="footer-bar">
+    <span id="last-updated">—</span>
+    <span id="settings-link" onclick="openSettings()">⚙ change bin</span>
+  </div>
+</div>
+
+<script>
+const CREDS_KEY = 'cs_viewer_creds';
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+const POLL_INTERVAL_MS = 20000; // auto-refresh every 20s while app is open
+
+let pollTimer = null;
+
+function getCreds() {
+  try { const raw = localStorage.getItem(CREDS_KEY); return raw ? JSON.parse(raw) : null; }
+  catch(e) { return null; }
+}
+function setCreds(apiKey, binId) {
+  localStorage.setItem(CREDS_KEY, JSON.stringify({ apiKey, binId }));
+}
+
+function setSyncStatus(state, label) {
+  document.getElementById('sync-dot').className = state;
+  document.getElementById('sync-label').textContent = label;
+}
+
+function showScreen(name) {
+  document.getElementById('setup-screen').style.display = name === 'setup' ? 'flex' : 'none';
+  document.getElementById('empty-state').style.display = name === 'empty' ? 'flex' : 'none';
+  document.getElementById('content-wrap').style.display = name === 'content' ? 'block' : 'none';
+}
+
+function openSettings() {
+  clearInterval(pollTimer);
+  showScreen('setup');
+  const creds = getCreds();
+  if (creds) {
+    document.getElementById('input-apikey').value = creds.apiKey;
+    document.getElementById('input-binid').value = creds.binId;
+  }
+}
+
+function saveSetup() {
+  const apiKey = document.getElementById('input-apikey').value.trim();
+  const binId = document.getElementById('input-binid').value.trim();
+  if (!apiKey || !binId) { alert('Fill in both fields.'); return; }
+  setCreds(apiKey, binId);
+  fetchNotes(true);
+}
+
+async function fetchNotes(isManual) {
+  const creds = getCreds();
+  if (!creds) { showScreen('setup'); return; }
+
+  setSyncStatus('syncing', isManual ? 'refreshing...' : 'checking...');
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (isManual) refreshBtn.classList.add('spinning');
+
+  try {
+    const res = await fetch(`${JSONBIN_BASE}/${creds.binId}/latest`, {
+      headers: { 'X-Master-Key': creds.apiKey }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    const json = await res.json();
+    const data = json.record;
+
+    if (!data || !data.html || data.html.trim() === '') {
+      showScreen('empty');
+      setSyncStatus('saved', 'connected');
+    } else {
+      const contentEl = document.getElementById('content');
+      const changed = contentEl.innerHTML !== data.html;
+      contentEl.innerHTML = data.html;
+      showScreen('content');
+      setSyncStatus('saved', 'up to date');
+      if (changed && !isManual === false) {
+        // subtle flash to show something updated, but skip on very first load
+      }
+      if (changed && contentEl.dataset.loadedOnce === '1') {
+        document.getElementById('content-wrap').classList.remove('flash');
+        void document.getElementById('content-wrap').offsetWidth;
+        document.getElementById('content-wrap').classList.add('flash');
+      }
+      contentEl.dataset.loadedOnce = '1';
+      document.getElementById('last-updated').textContent =
+        'updated ' + new Date(data.exported).toLocaleString();
+    }
+  } catch(e) {
+    setSyncStatus('error', 'failed to sync');
+    console.error(e);
+  } finally {
+    if (isManual) refreshBtn.classList.remove('spinning');
+    startPolling();
+  }
+}
+
+function manualRefresh() { fetchNotes(true); }
+
+function startPolling() {
+  clearInterval(pollTimer);
+  pollTimer = setInterval(() => fetchNotes(false), POLL_INTERVAL_MS);
+}
+
+// Pull-to-refresh (basic touch gesture)
+let touchStartY = 0;
+document.getElementById('content-wrap').addEventListener('touchstart', e => {
+  if (document.getElementById('content-wrap').scrollTop === 0) touchStartY = e.touches[0].clientY;
+}, { passive: true });
+document.getElementById('content-wrap').addEventListener('touchend', e => {
+  if (touchStartY && document.getElementById('content-wrap').scrollTop === 0) {
+    const diff = e.changedTouches[0].clientY - touchStartY;
+    if (diff > 80) manualRefresh();
+  }
+  touchStartY = 0;
+}, { passive: true });
+
+// Refresh when app regains focus/visibility (e.g. reopened from home screen)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) fetchNotes(false);
+});
+
+// Register service worker for offline app-shell caching
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+// Boot
+const creds = getCreds();
+if (creds) fetchNotes(true); else showScreen('setup');
+</script>
+
+</body>
+</html>
+
+{
+  "name": "Crimson Notes Viewer",
+  "short_name": "Crimson Notes",
+  "description": "Read-only mobile viewer for Crimson Syndicate notes, synced from JSONBin.",
+  "start_url": "./crimson_notes_viewer.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
+// Crimson Notes Viewer — service worker
+// Caches the app shell so it opens instantly and works offline.
+// It does NOT cache JSONBin API responses — those are always fetched live.
+
+const CACHE_NAME = 'crimson-notes-viewer-v1';
+const SHELL_FILES = [
+  './crimson_notes_viewer.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_FILES))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  const url = event.request.url;
+
+  // Never cache JSONBin API calls — always go to network for live data
+  if (url.includes('api.jsonbin.io')) {
+    return;
+  }
+
+  // App shell: cache-first, falling back to network
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      return cached || fetch(event.request);
+    })
+  );
+});
