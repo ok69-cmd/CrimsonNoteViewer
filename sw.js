@@ -4,7 +4,7 @@
 
 const CACHE_NAME = 'crimson-notes-viewer-v2';
 const SHELL_FILES = [
-  './crimson_notes_viewer.html',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
