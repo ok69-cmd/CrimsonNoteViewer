@@ -2,7 +2,7 @@
   "name": "Crimson Notes Viewer",
   "short_name": "Crimson Notes",
   "description": "Read-only mobile viewer for Crimson Syndicate notes, synced from JSONBin.",
-  "start_url": "./crimson_notes_viewer.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
