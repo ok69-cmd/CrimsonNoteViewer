@@ -2,7 +2,7 @@
 // Caches the app shell so it opens instantly and works offline.
 // It does NOT cache JSONBin API responses — those are always fetched live.
 
-const CACHE_NAME = 'crimson-notes-viewer-v2';
+const CACHE_NAME = 'crimson-notes-viewer-v3';
 const SHELL_FILES = [
   './index.html',
   './manifest.json',
