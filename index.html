@@ -111,7 +111,7 @@
     font-size: 13px; width: 100%; max-width: 320px; outline: none;
   }
   .modal-input:focus { border-color: #cc4444; }
-  .setup-label { font-size: 11px; color: #777; align-self: flex-start; max-width: 320px; width: 100%; margin-top: 6px; }
+  .setup-label { font-size: 11px; color: #777; align-self: center; text-align: left; max-width: 320px; width: 100%; margin-top: 6px; }
   .setup-btn {
     margin-top: 10px; padding: 10px 22px; background: #2a1010;
     border: 1px solid #cc444455; color: #ff6b7a; border-radius: 6px;
@@ -132,132 +132,181 @@
   .flash { animation: flashbg 0.6s ease; }
   @keyframes flashbg { 0% { background: rgba(204,68,68,0.15); } 100% { background: transparent; } }
 
-  /* ===== HOLO OVERLAY ===== */
+  /* ===== PROFILES BAR (character files) ===== */
+  #profiles-bar {
+    position: relative; z-index: 5;
+    background: #121212; border-bottom: 1px solid #2a2a2a;
+    padding: 7px 10px; display: flex; gap: 6px;
+    overflow-x: auto; flex-shrink: 0; scrollbar-width: none;
+  }
+  #profiles-bar::-webkit-scrollbar { display: none; }
+  .profile-btn {
+    padding: 4px 10px; border-radius: 3px; font-size: 11px; font-weight: bold;
+    cursor: pointer; border: 1px solid; letter-spacing: 0.5px;
+    flex-shrink: 0; white-space: nowrap; opacity: 0.85;
+  }
+  .profile-btn:active { opacity: 1; transform: scale(0.95); }
+
+  /* Ability links inside notes (same look as the PC editor) */
+  .ability-link, .ability-tag { cursor: pointer; padding: 0 1px; }
+  .ability-link:active, .ability-tag:active { background: rgba(255,255,255,0.08); }
+
+  /* ===== ABILITY HOLO (compact card, ported from PC editor) ===== */
+  #ability-holo-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 5100; align-items: center; justify-content: center; padding: 16px;
+  }
+  #ability-holo-overlay.open { display: flex; }
+  #ability-holo-card {
+    position: relative; width: 380px; max-width: 100%;
+    background: #0a0a0f; border: 1px solid var(--ah-color, #ff6b7a); border-radius: 6px;
+    box-shadow: 0 0 30px color-mix(in srgb, var(--ah-color, #ff6b7a) 25%, transparent), inset 0 0 40px rgba(0,0,0,0.7);
+    animation: ahIn 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes ahIn { from { opacity: 0; transform: scale(0.9) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  #ah-inner { position: relative; border-radius: 5px; overflow: hidden; }
+  #ability-holo-card.ah-multi { border-color: #3a3a3a; box-shadow: 0 0 30px rgba(255,255,255,0.1); }
+  .ah-scan {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(transparent, var(--ah-color, #ff6b7a), transparent);
+    opacity: 0.6; animation: ahScan 2.2s linear infinite; z-index: 5; pointer-events: none;
+  }
+  .ah-multi .ah-scan { background: linear-gradient(transparent, #888, transparent); }
+  @keyframes ahScan { 0% { transform: translateY(0); } 100% { transform: translateY(400px); } }
+  #ah-header {
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    border-bottom: 1px solid var(--ah-color, #ff6b7a); background: rgba(0,0,0,0.5);
+  }
+  .ah-multi #ah-header { border-bottom-color: #3a3a3a; }
+  #ah-name { font-size: 14px; font-weight: bold; color: var(--ah-color, #ff6b7a); letter-spacing: 0.5px; }
+  .x-btn {
+    background: none; border: 1px solid #333; color: #777; width: 28px; height: 28px;
+    border-radius: 3px; font-size: 12px; flex-shrink: 0; font-family: inherit;
+  }
+  #ah-viewport {
+    height: 160px; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, transparent 70%);
+  }
+  #ah-viewport img { width: 100%; height: 100%; object-fit: cover; }
+  .ah-fx { width: 70px; height: 70px; position: relative; }
+  .ah-ring {
+    position: absolute; inset: 0; border: 2px solid var(--ah-color, #ff6b7a);
+    border-radius: 50%; opacity: 0; animation: ahRing 1.6s ease-out infinite;
+  }
+  .ah-ring:nth-child(2) { animation-delay: 0.4s; }
+  .ah-ring:nth-child(3) { animation-delay: 0.8s; }
+  @keyframes ahRing { 0% { transform: scale(0.3); opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
+  .ah-core {
+    position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border-radius: 50%;
+    transform: translate(-50%,-50%); background: var(--ah-color, #ff6b7a);
+    box-shadow: 0 0 20px 6px color-mix(in srgb, var(--ah-color, #ff6b7a) 60%, transparent);
+  }
+  .ah-fx-label { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font-size: 9px; color: #665; letter-spacing: 1px; }
+  .ah-fx-multi .ah-ring { animation: ahRing 1.6s ease-out infinite, ahColorCycle 4s linear infinite; }
+  .ah-fx-multi .ah-core { animation: ahColorCycleBg 4s linear infinite; }
+  @keyframes ahColorCycle {
+    0% { border-color: #ff2323; } 25% { border-color: #f717eb; } 50% { border-color: #4ecb82; }
+    75% { border-color: #2596ff; } 100% { border-color: #ff2323; }
+  }
+  @keyframes ahColorCycleBg {
+    0%   { background: #ff2323; box-shadow: 0 0 20px 6px #ff232399; }
+    25%  { background: #f717eb; box-shadow: 0 0 20px 6px #f717eb99; }
+    50%  { background: #4ecb82; box-shadow: 0 0 20px 6px #4ecb8299; }
+    75%  { background: #2596ff; box-shadow: 0 0 20px 6px #2596ff99; }
+    100% { background: #ff2323; box-shadow: 0 0 20px 6px #ff232399; }
+  }
+  #ah-body { padding: 12px 16px 16px; }
+  #ah-desc { font-size: 12.5px; line-height: 1.7; color: #bbb; margin-bottom: 8px; white-space: normal; }
+  #ah-user-row { font-size: 10px; color: #666; }
+  #ah-user { color: var(--ah-color, #ff6b7a); font-weight: bold; }
+  .ah-multi #ah-name, .ah-multi #ah-user { color: #ddd; }
+
+  /* ===== CHARACTER PROFILE HOLO (ported from PC editor, phone-friendly) ===== */
   #holo-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(2px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    padding: 20px;
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+    z-index: 5000; align-items: center; justify-content: center; padding: 10px;
   }
-  #holo-overlay.active { display: flex; }
-
-  .holo-panel {
-    background: #0a0a0aee;
-    border: 1px solid #cc444488;
-    border-radius: 10px;
-    width: 100%;
-    max-width: 380px;
-    box-shadow: 0 0 40px #cc444433, inset 0 0 60px #cc444411;
-    position: relative;
-    overflow: hidden;
-    animation: panelIn 0.3s ease;
-  }
-  @keyframes panelIn {
-    from { opacity: 0; transform: scale(0.92) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .holo-scanline {
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(transparent, #ff6b7a88, transparent);
-    animation: holoScan 2.5s linear infinite;
-    pointer-events: none;
-    z-index: 5;
-  }
-  @keyframes holoScan {
-    0% { transform: translateY(-10px); }
-    100% { transform: translateY(400px); }
-  }
-
-  .holo-header {
-    padding: 14px 18px;
-    border-bottom: 1px solid #2a1414;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .holo-title {
-    color: #ff6b7a;
-    font-weight: bold;
-    font-size: 15px;
-    letter-spacing: 1px;
-    text-shadow: 0 0 8px #ff6b7a66;
-  }
-  .holo-close {
-    color: #888;
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-    padding: 4px;
-  }
-  .holo-close:active { color: #ff6b7a; }
-
-  .holo-viewport {
-    height: 220px;
-    background: radial-gradient(ellipse at center, #1e0a0a 0%, #0a0a0a 70%);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  #holo-overlay.open { display: flex; }
+  #holo-card {
+    position: relative; width: 1050px; max-width: 100%; max-height: 94vh;
+    display: flex; flex-direction: column;
+    background: #0a0a0f; border: 1px solid var(--holo-color, #ff6b7a); border-radius: 4px;
+    box-shadow: 0 0 30px var(--holo-glow, rgba(255,107,122,0.4)), inset 0 0 30px rgba(0,0,0,0.8);
+    transform: scale(0.04); opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease;
     overflow: hidden;
   }
-  .holo-viewport::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(rgba(255,107,122,0.06) 1px, transparent 1px);
-    background-size: 100% 3px;
-    pointer-events: none;
+  #holo-card.holo-in { transform: scale(1); opacity: 1; }
+  #holo-card::before, #holo-card::after {
+    content: ''; position: absolute; width: 16px; height: 16px; z-index: 2;
+    border-color: var(--holo-color, #ff6b7a); border-style: solid;
+    filter: drop-shadow(0 0 8px var(--holo-color, #ff6b7a));
   }
-  .holo-viewport img {
-    width: 100%; height: 100%; object-fit: cover;
+  #holo-card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  #holo-card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+  #holo-scan {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(transparent, var(--holo-color, #ff6b7a), transparent);
+    opacity: 0.5; animation: holo-sweep 2.5s linear infinite; pointer-events: none; z-index: 10;
+  }
+  @keyframes holo-sweep { 0% { transform: translateY(0); } 100% { transform: translateY(1000px); } }
+  #holo-card-inner {
+    position: relative; display: flex; flex-direction: column; min-height: 0; flex: 1;
+    background-image:
+      linear-gradient(var(--holo-grid, rgba(255,107,122,0.04)) 1px, transparent 1px),
+      linear-gradient(90deg, var(--holo-grid, rgba(255,107,122,0.04)) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  #holo-header {
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--holo-color, #ff6b7a); background: rgba(0,0,0,0.5); flex-shrink: 0;
+  }
+  .holo-logo { font-size: 9px; letter-spacing: 3px; color: #444; text-transform: uppercase; flex-shrink: 0; }
+  .holo-title-block { flex: 1; min-width: 0; }
+  #holo-jp { font-size: 11px; color: var(--holo-color, #ff6b7a); opacity: 0.7; letter-spacing: 2px; }
+  #holo-name { font-size: 18px; font-weight: bold; color: var(--holo-color, #ff6b7a); letter-spacing: 1px; text-shadow: 0 0 12px var(--holo-glow, rgba(255,107,122,0.6)); }
+  #holo-role { font-size: 10px; color: #666; letter-spacing: 1px; text-transform: uppercase; }
+  #holo-body { display: flex; min-height: 0; flex: 1; }
+  #holo-img-panel {
+    width: 220px; min-width: 220px; border-right: 1px solid var(--holo-color, #ff6b7a);
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.4); color: #333; font-size: 10px; letter-spacing: 1px; text-align: center;
+  }
+  #holo-img-panel .holo-ph-icon { font-size: 32px; opacity: 0.3; margin-bottom: 8px; }
+  #holo-info-panel {
+    flex: 1; overflow-y: auto; padding: 14px 16px; -webkit-overflow-scrolling: touch;
+    display: flex; flex-direction: column; gap: 12px; white-space: normal;
+  }
+  .holo-section { display: flex; flex-direction: column; gap: 4px; }
+  .holo-section-title {
+    font-size: 9px; letter-spacing: 3px; color: var(--holo-color, #ff6b7a); text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,107,122,0.2); padding-bottom: 3px; margin-bottom: 2px;
+  }
+  .holo-row { display: flex; gap: 8px; font-size: 12px; line-height: 1.5; }
+  .holo-label { color: #555; min-width: 88px; flex-shrink: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 1px; }
+  .holo-val { color: #bbb; }
+  .holo-text { font-size: 12px; color: #888; line-height: 1.65; padding: 0 2px; margin-bottom: 6px; }
+  .holo-ability {
+    background: rgba(255,255,255,0.02); border-left: 2px solid var(--holo-color, #ff6b7a);
+    padding: 6px 9px; border-radius: 0 2px 2px 0; display: flex; flex-direction: column; gap: 2px;
+  }
+  .holo-ability-name { color: var(--holo-color, #ff6b7a); font-weight: bold; font-size: 12px; }
+  .holo-ability-desc { color: #888; font-size: 11px; line-height: 1.55; }
+  .holo-tag {
+    display: inline-block; border: 1px solid; font-size: 10px; padding: 1px 6px;
+    border-radius: 2px; letter-spacing: 0.5px; margin: 2px;
   }
 
-  .placeholder-fx { width: 90px; height: 90px; position: relative; }
-  .placeholder-fx .ring {
-    position: absolute; inset: 0;
-    border: 2px solid #ff6b7a;
-    border-radius: 50%;
-    opacity: 0;
-    animation: teleportRing 1.6s ease-out infinite;
+  /* Phones: stack it, drop the portrait column, use the whole screen */
+  @media (max-width: 700px) {
+    #holo-overlay { padding: 6px; }
+    #holo-card { max-height: 96vh; }
+    #holo-img-panel { display: none; }
+    .holo-logo { display: none; }
+    #holo-name { font-size: 16px; }
+    .holo-label { min-width: 74px; }
   }
-  .placeholder-fx .ring:nth-child(2) { animation-delay: 0.4s; }
-  .placeholder-fx .ring:nth-child(3) { animation-delay: 0.8s; }
-  @keyframes teleportRing {
-    0% { transform: scale(0.3); opacity: 0.9; }
-    100% { transform: scale(1.8); opacity: 0; }
-  }
-  .placeholder-fx .core {
-    position: absolute; top: 50%; left: 50%;
-    width: 14px; height: 14px;
-    background: #ff6b7a;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 20px 6px #ff6b7a99;
-    animation: coreFlicker 1.2s ease-in-out infinite;
-  }
-  @keyframes coreFlicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-  .holo-placeholder-label {
-    position: absolute; bottom: 8px; left: 0; right: 0;
-    text-align: center; font-size: 9px; color: #665; letter-spacing: 1px;
-  }
-
-  .holo-body { padding: 16px 18px 18px; }
-  .holo-type {
-    display: inline-block; font-size: 10px; color: #ff6b7a;
-    border: 1px solid #ff6b7a55; padding: 2px 8px; border-radius: 3px;
-    margin-bottom: 10px; letter-spacing: 0.5px;
-  }
-  .holo-desc { font-size: 13px; line-height: 1.7; color: #c4b8b8; }
-  .holo-user { margin-top: 12px; font-size: 11px; color: #776; }
-  .holo-user span { color: #ff9999; }
 </style>
 </head>
 <body>
@@ -279,6 +328,8 @@
       </svg>
     </button>
   </div>
+
+  <div id="profiles-bar" style="display:none"></div>
 
   <div id="setup-screen" style="display:none">
     <div class="icon">☁</div>
@@ -311,44 +362,77 @@
   </div>
 </div>
 
-<div id="holo-overlay" onclick="if(event.target===this) closeHolo()">
-  <div class="holo-panel">
-    <div class="holo-scanline"></div>
-    <div class="holo-header">
-      <span class="holo-title" id="holo-name">ABILITY</span>
-      <span class="holo-close" onclick="closeHolo()">✕</span>
-    </div>
-    <div class="holo-viewport" id="holo-viewport">
-      <div class="placeholder-fx" id="holo-placeholder">
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="core"></div>
+<!-- Ability popup -->
+<div id="ability-holo-overlay" onclick="if(event.target===this) closeAbilityHolo()">
+  <div id="ability-holo-card">
+    <div id="ah-inner">
+      <div class="ah-scan"></div>
+      <div id="ah-header">
+        <span id="ah-name">ABILITY</span>
+        <button class="x-btn" onclick="closeAbilityHolo()">✕</button>
       </div>
-      <div class="holo-placeholder-label" id="holo-placeholder-label">[ no gif set yet ]</div>
+      <div id="ah-viewport"></div>
+      <div id="ah-body">
+        <div id="ah-desc"></div>
+        <div id="ah-user-row">Used by <span id="ah-user"></span></div>
+      </div>
     </div>
-    <div class="holo-body">
-      <span class="holo-type" id="holo-type">TYPE</span>
-      <div class="holo-desc" id="holo-desc">Description goes here.</div>
-      <div class="holo-user">Used by <span id="holo-user">Character</span></div>
+  </div>
+</div>
+
+<!-- Character profile popup -->
+<div id="holo-overlay" onclick="if(event.target===this) closeHolo()">
+  <div id="holo-card">
+    <div id="holo-scan"></div>
+    <div id="holo-card-inner">
+      <div id="holo-header">
+        <div class="holo-logo">CRIMSON SYNDICATE // FILE</div>
+        <div class="holo-title-block">
+          <div id="holo-jp"></div>
+          <div id="holo-name"></div>
+          <div id="holo-role"></div>
+        </div>
+        <button class="x-btn" onclick="closeHolo()">✕</button>
+      </div>
+      <div id="holo-body">
+        <div id="holo-img-panel"><div><div class="holo-ph-icon">◈</div>PORTRAIT<br>CLASSIFIED</div></div>
+        <div id="holo-info-panel"></div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
 const CREDS_KEY = 'cs_viewer_creds';
+const CHARDATA_KEY = 'cs_viewer_chardata';   // last good CHAR_DATA, so profiles survive a notes-only push
 const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
 const POLL_INTERVAL_MS = 20000;
 
 let pollTimer = null;
-let abilitiesData = {};
+let legacyAbilities = {};   // old Abilities bin (fallback only)
+let charData = {};          // CHAR_DATA pushed from the PC editor
+let ABILITY_LOOKUP = {};
+let lastHtml = null;
+let lastCharJson = null;
+
+const SHARED_MULTI = { 'Cursed Eye': ['aria', 'luna', 'yuuna', 'ivy'] };
+
+/* ---------- storage helpers (wrapped: storage can throw in private windows) ---------- */
+function lsGet(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
 
 function getCreds() {
-  try { const raw = localStorage.getItem(CREDS_KEY); return raw ? JSON.parse(raw) : null; }
+  try { const raw = lsGet(CREDS_KEY); return raw ? JSON.parse(raw) : null; }
   catch(e) { return null; }
 }
 function setCreds(apiKey, binId, abilitiesBinId) {
-  localStorage.setItem(CREDS_KEY, JSON.stringify({ apiKey, binId, abilitiesBinId }));
+  lsSet(CREDS_KEY, JSON.stringify({ apiKey, binId, abilitiesBinId }));
+}
+try { charData = JSON.parse(lsGet(CHARDATA_KEY) || '{}') || {}; } catch(e) { charData = {}; }
+
+function cap(k) { return k.charAt(0).toUpperCase() + k.slice(1); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
 function setSyncStatus(state, label) {
@@ -360,6 +444,8 @@ function showScreen(name) {
   document.getElementById('setup-screen').style.display = name === 'setup' ? 'flex' : 'none';
   document.getElementById('empty-state').style.display = name === 'empty' ? 'flex' : 'none';
   document.getElementById('content-wrap').style.display = name === 'content' ? 'block' : 'none';
+  document.getElementById('profiles-bar').style.display =
+    (name !== 'setup' && Object.keys(charData).length) ? 'flex' : 'none';
 }
 
 function openSettings() {
@@ -382,70 +468,187 @@ function saveSetup() {
   fetchAll(true);
 }
 
-async function fetchAbilities(creds) {
-  if (!creds.abilitiesBinId) { abilitiesData = {}; return; }
+/* ---------- old Abilities bin (only used if no CHAR_DATA has been pushed yet) ---------- */
+async function fetchLegacyAbilities(creds) {
+  if (!creds.abilitiesBinId || Object.keys(charData).length) { legacyAbilities = {}; return; }
   try {
-    const res = await fetch(`${JSONBIN_BASE}/${creds.abilitiesBinId}/latest`, {
-      headers: { 'X-Master-Key': creds.apiKey }
-    });
+    const res = await fetch(`${JSONBIN_BASE}/${creds.abilitiesBinId}/latest`, { headers: { 'X-Master-Key': creds.apiKey } });
     if (!res.ok) throw new Error('abilities fetch failed');
     const json = await res.json();
-    abilitiesData = (json.record && json.record.abilities) ? json.record.abilities : {};
-  } catch(e) {
-    console.warn('Could not load abilities bin:', e);
-    abilitiesData = {};
-  }
+    legacyAbilities = (json.record && json.record.abilities) ? json.record.abilities : {};
+  } catch(e) { console.warn('Could not load abilities bin:', e); legacyAbilities = {}; }
 }
 
-function linkifyAbilities(rawHtml) {
-  const names = Object.keys(abilitiesData);
-  if (names.length === 0) return rawHtml;
-  // Longest names first so overlapping names don't get partially matched
-  names.sort((a, b) => b.length - a.length);
-  let result = rawHtml;
-  names.forEach(name => {
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp('\\((' + escaped + ')\\)', 'g');
-    result = result.replace(pattern, (match, inner) =>
-      `<span class="ability-tag" data-ability="${inner.replace(/"/g,'&quot;')}">(${inner})</span>`
-    );
+/* ---------- ability lookup (same rules as the PC editor) ---------- */
+function buildAbilityLookup() {
+  ABILITY_LOOKUP = {};
+  Object.keys(charData).forEach(key => {
+    const c = charData[key];
+    [].concat(c.abilities || [], c.baseAbilities || []).forEach(a => {
+      if (a && a.name && !ABILITY_LOOKUP[a.name]) {
+        ABILITY_LOOKUP[a.name] = { name: a.name, desc: a.desc, charKey: key, charName: c.name, color: c.color };
+      }
+    });
   });
-  return result;
-}
-
-function attachAbilityHandlers() {
-  document.querySelectorAll('.ability-tag').forEach(el => {
-    el.addEventListener('click', () => openHolo(el.dataset.ability));
+  Object.keys(legacyAbilities).forEach(name => {
+    if (ABILITY_LOOKUP[name]) return;
+    const a = legacyAbilities[name];
+    ABILITY_LOOKUP[name] = { name, desc: a.description, charName: a.user, color: '#ff6b7a', gifUrl: a.gifUrl, type: a.type };
   });
 }
 
-function openHolo(name) {
-  const data = abilitiesData[name];
-  if (!data) return;
-  document.getElementById('holo-name').textContent = `(${name.toUpperCase()})`;
-  document.getElementById('holo-type').textContent = data.type || 'Unknown';
-  document.getElementById('holo-desc').textContent = data.description || '';
-  document.getElementById('holo-user').textContent = data.user || 'Unknown';
+function resolveAbilityName(inner) {
+  if (ABILITY_LOOKUP[inner]) return inner;
+  const names = Object.keys(ABILITY_LOOKUP).sort((a, b) => b.length - a.length);
+  for (const n of names) if (inner.startsWith(n) && inner.length <= n.length + 4) return n;
+  const lower = inner.toLowerCase();
+  for (const n of names) if (lower.startsWith(n.toLowerCase()) && inner.length <= n.length + 4) return n;
+  return null;
+}
 
-  const viewport = document.getElementById('holo-viewport');
-  if (data.gifUrl && data.gifUrl.trim() !== '') {
-    viewport.innerHTML = `<img src="${data.gifUrl}" alt="${name}">`;
+// Turns "(Bloodskip)" text into tappable, character-colored links.
+// Skips text that the PC editor already linked.
+function linkifyAbilities(root) {
+  if (!Object.keys(ABILITY_LOOKUP).length) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => (n.parentElement && n.parentElement.closest('.ability-link, .ability-tag'))
+      ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  });
+  const nodes = []; let n;
+  while ((n = walker.nextNode())) if (n.nodeValue.includes('(')) nodes.push(n);
+
+  nodes.forEach(node => {
+    const text = node.nodeValue, frag = document.createDocumentFragment();
+    const pattern = /\(([^()]+)\)/g;
+    let m, last = 0, matched = false;
+    while ((m = pattern.exec(text)) !== null) {
+      const canonical = resolveAbilityName(m[1]);
+      if (!canonical) continue;
+      matched = true;
+      frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+      const span = document.createElement('span');
+      const color = SHARED_MULTI[canonical] ? '#cccccc' : ABILITY_LOOKUP[canonical].color;
+      span.className = 'ability-link';
+      span.dataset.ability = canonical;
+      span.style.color = color;
+      span.style.borderBottom = `1px dashed ${color}88`;
+      span.textContent = m[0];
+      frag.appendChild(span);
+      last = m.index + m[0].length;
+    }
+    if (matched) {
+      frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    }
+  });
+}
+
+// One click listener for every ability link (editor-made or viewer-made)
+document.getElementById('content').addEventListener('click', e => {
+  const tag = e.target.closest('.ability-link, .ability-tag');
+  if (!tag) return;
+  const raw = tag.dataset.ability || tag.textContent.replace(/^\(|\)$/g, '');
+  const name = ABILITY_LOOKUP[raw] ? raw : resolveAbilityName(raw);
+  if (name) openAbilityHolo(name);
+});
+
+/* ---------- ability popup ---------- */
+function openAbilityHolo(name) {
+  const d = ABILITY_LOOKUP[name];
+  if (!d) return;
+  const card = document.getElementById('ability-holo-card');
+  const multi = !!SHARED_MULTI[name];
+  card.classList.toggle('ah-multi', multi);
+  card.style.setProperty('--ah-color', multi ? '#888' : (d.color || '#ff6b7a'));
+  document.getElementById('ah-name').textContent = `(${d.name})`;
+  document.getElementById('ah-desc').textContent = d.desc || '';
+  document.getElementById('ah-user').textContent = multi
+    ? SHARED_MULTI[name].map(cap).join(', ')
+    : (d.charName || 'Unknown');
+
+  const vp = document.getElementById('ah-viewport');
+  if (d.gifUrl && d.gifUrl.trim()) {
+    vp.innerHTML = `<img src="${esc(d.gifUrl)}" alt="${esc(d.name)}">`;
   } else {
-    viewport.innerHTML = `
-      <div class="placeholder-fx">
-        <div class="ring"></div><div class="ring"></div><div class="ring"></div>
-        <div class="core"></div>
-      </div>
-      <div class="holo-placeholder-label">[ no gif set yet ]</div>`;
+    vp.innerHTML = `<div class="ah-fx${multi ? ' ah-fx-multi' : ''}"><div class="ah-ring"></div><div class="ah-ring"></div><div class="ah-ring"></div><div class="ah-core"></div></div><div class="ah-fx-label">[ no gif set yet ]</div>`;
   }
+  document.getElementById('ability-holo-overlay').classList.add('open');
+}
+function closeAbilityHolo() { document.getElementById('ability-holo-overlay').classList.remove('open'); }
 
-  document.getElementById('holo-overlay').classList.add('active');
+/* ---------- profiles bar + character file popup ---------- */
+function renderProfilesBar() {
+  const bar = document.getElementById('profiles-bar');
+  bar.innerHTML = '';
+  Object.keys(charData).forEach(key => {
+    const c = charData[key];
+    const btn = document.createElement('div');
+    btn.className = 'profile-btn';
+    btn.textContent = '▸ ' + cap(key);
+    btn.style.color = c.color; btn.style.borderColor = c.color + '66'; btn.style.background = c.color + '18';
+    btn.onclick = () => openHolo(key, btn);
+    bar.appendChild(btn);
+  });
 }
 
+function section(title, inner) {
+  return `<div class="holo-section"><div class="holo-section-title">${title}</div>${inner}</div>`;
+}
+function rows(list) {
+  return (list || []).map(r => `<div class="holo-row"><span class="holo-label">${r.label}</span><span class="holo-val">${r.val}</span></div>`).join('');
+}
+function blocks(list, icon, nameKey, descKey, colored) {
+  return (list || []).map(x => `<div class="holo-ability"><span class="holo-ability-name"${colored ? ' style="color:var(--holo-color)"' : ''}>${icon} ${x[nameKey]}</span><span class="holo-ability-desc">${x[descKey]}</span></div>`).join('');
+}
+
+let holoCloseTimer = null;
+function openHolo(key, btnEl) {
+  const d = charData[key];
+  if (!d) return;
+  clearTimeout(holoCloseTimer);
+  const card = document.getElementById('holo-card');
+  card.style.setProperty('--holo-color', d.color);
+  card.style.setProperty('--holo-glow', d.glow || 'rgba(255,107,122,0.4)');
+  card.style.setProperty('--holo-grid', d.grid || 'rgba(255,107,122,0.04)');
+  document.getElementById('holo-jp').textContent = d.jp || '';
+  document.getElementById('holo-name').textContent = d.name || key;
+  document.getElementById('holo-role').textContent = d.role || '';
+
+  let h = '';
+  h += section('Identity', rows(d.basics));
+  if (d.canon) h += section('Current Canon', rows(d.canon));
+  h += section('Psych Profile',
+    (d.personality ? `<div class="holo-text">${d.personality}</div>` : '') +
+    blocks(d.personalityTraits, '▸', 'trait', 'desc', true));
+  if (d.combatStyle) h += section('Combat Style', `<div class="holo-text">${d.combatStyle}</div>`);
+  if (d.abilities) h += section('Blood Abilities', blocks(d.abilities, '◈', 'name', 'desc'));
+  if (d.baseAbilities) h += section('Base Abilities', blocks(d.baseAbilities, '◈', 'name', 'desc'));
+  if (d.curseStatus) h += section('Curse Status', rows(d.curseStatus));
+  if (d.relationships) h += section('Relationships', blocks(d.relationships, '↔', 'name', 'desc', true));
+  if (d.lore) h += section('Lore', blocks(d.lore, '◆', 'label', 'val', true));
+  if (d.killPriority) h += section('Kill Priority', blocks(d.killPriority, '◆', 'label', 'val', true));
+  if (d.tags) h += section('Classification', '<div>' + d.tags.map(t =>
+    `<span class="holo-tag" style="border-color:${d.color};color:${d.color};background:${d.color}11">${t}</span>`).join('') + '</div>');
+  const info = document.getElementById('holo-info-panel');
+  info.innerHTML = h;
+  info.scrollTop = 0;
+
+  // Card "projects" out of the button it was opened from
+  document.getElementById('holo-overlay').classList.add('open');
+  const r = btnEl.getBoundingClientRect();
+  const cardLeft = (window.innerWidth - card.offsetWidth) / 2;
+  const cardTop = (window.innerHeight - card.offsetHeight) / 2;
+  card.style.transformOrigin = `${r.left + r.width / 2 - cardLeft}px ${r.top + r.height / 2 - cardTop}px`;
+  requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('holo-in')));
+}
 function closeHolo() {
-  document.getElementById('holo-overlay').classList.remove('active');
+  if (!document.getElementById('holo-overlay').classList.contains('open')) return;
+  document.getElementById('holo-card').classList.remove('holo-in');
+  clearTimeout(holoCloseTimer);
+  holoCloseTimer = setTimeout(() => document.getElementById('holo-overlay').classList.remove('open'), 300);
 }
 
+/* ---------- sync ---------- */
 async function fetchAll(isManual) {
   const creds = getCreds();
   if (!creds) { showScreen('setup'); return; }
@@ -455,40 +658,43 @@ async function fetchAll(isManual) {
   if (isManual) refreshBtn.classList.add('spinning');
 
   try {
-    await fetchAbilities(creds);
-
-    const res = await fetch(`${JSONBIN_BASE}/${creds.binId}/latest`, {
-      headers: { 'X-Master-Key': creds.apiKey }
-    });
+    const res = await fetch(`${JSONBIN_BASE}/${creds.binId}/latest`, { headers: { 'X-Master-Key': creds.apiKey } });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || `HTTP ${res.status}`);
     }
-    const json = await res.json();
-    const data = json.record;
+    const data = (await res.json()).record;
+
+    if (data && data.charData && typeof data.charData === 'object') {
+      charData = data.charData;
+      lsSet(CHARDATA_KEY, JSON.stringify(charData));
+    }
+    await fetchLegacyAbilities(creds);
+
+    const charJson = JSON.stringify(charData);
+    if (charJson !== lastCharJson) { buildAbilityLookup(); renderProfilesBar(); }
 
     if (!data || !data.html || data.html.trim() === '') {
       showScreen('empty');
       setSyncStatus('saved', 'connected');
     } else {
       const contentEl = document.getElementById('content');
-      const linkified = linkifyAbilities(data.html);
-      const changed = contentEl.innerHTML !== linkified;
-      contentEl.innerHTML = linkified;
-      attachAbilityHandlers();
+      const changed = data.html !== lastHtml || charJson !== lastCharJson;
+      if (changed) {
+        contentEl.innerHTML = data.html;
+        linkifyAbilities(contentEl);
+        if (lastHtml !== null) {
+          const wrap = document.getElementById('content-wrap');
+          wrap.classList.remove('flash'); void wrap.offsetWidth; wrap.classList.add('flash');
+        }
+        lastHtml = data.html;
+        updateStatCounts(contentEl);
+      }
       showScreen('content');
       setSyncStatus('saved', 'up to date');
-
-      if (changed && contentEl.dataset.loadedOnce === '1') {
-        document.getElementById('content-wrap').classList.remove('flash');
-        void document.getElementById('content-wrap').offsetWidth;
-        document.getElementById('content-wrap').classList.add('flash');
-      }
-      contentEl.dataset.loadedOnce = '1';
-      document.getElementById('last-updated').textContent =
-        'updated ' + new Date(data.exported).toLocaleString();
-      updateStatCounts(contentEl);
+      document.getElementById('last-updated').textContent = 'updated ' + new Date(data.exported).toLocaleString();
     }
+    lastCharJson = charJson;
   } catch(e) {
     setSyncStatus('error', 'failed to sync');
     console.error(e);
@@ -501,8 +707,7 @@ async function fetchAll(isManual) {
 function updateStatCounts(contentEl) {
   const text = contentEl.innerText || '';
   const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
-  const chars = text.length;
-  document.getElementById('stat-counts').textContent = `${words}w / ${chars}c`;
+  document.getElementById('stat-counts').textContent = `${words}w / ${text.length}c`;
 }
 
 function manualRefresh() { fetchAll(true); }
@@ -513,20 +718,17 @@ function startPolling() {
 }
 
 let touchStartY = 0;
-document.getElementById('content-wrap').addEventListener('touchstart', e => {
-  if (document.getElementById('content-wrap').scrollTop === 0) touchStartY = e.touches[0].clientY;
+const wrapEl = document.getElementById('content-wrap');
+wrapEl.addEventListener('touchstart', e => {
+  if (wrapEl.scrollTop === 0) touchStartY = e.touches[0].clientY;
 }, { passive: true });
-document.getElementById('content-wrap').addEventListener('touchend', e => {
-  if (touchStartY && document.getElementById('content-wrap').scrollTop === 0) {
-    const diff = e.changedTouches[0].clientY - touchStartY;
-    if (diff > 80) manualRefresh();
-  }
+wrapEl.addEventListener('touchend', e => {
+  if (touchStartY && wrapEl.scrollTop === 0 && e.changedTouches[0].clientY - touchStartY > 80) manualRefresh();
   touchStartY = 0;
 }, { passive: true });
 
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) fetchAll(false);
-});
+document.addEventListener('visibilitychange', () => { if (!document.hidden) fetchAll(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeAbilityHolo(); closeHolo(); } });
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -534,8 +736,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const creds = getCreds();
-if (creds) fetchAll(true); else showScreen('setup');
+if (Object.keys(charData).length) { buildAbilityLookup(); renderProfilesBar(); }
+if (getCreds()) fetchAll(true); else showScreen('setup');
 </script>
 
 </body>
